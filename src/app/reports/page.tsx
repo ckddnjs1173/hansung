@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
-import { ComingSoon } from "@/components/ui/coming-soon";
+import { ModulePage } from "@/components/ui/module-page";
+import { getReportsView } from "@/lib/repository";
 export const metadata: Metadata = { title: "보고서" };
-export default function Page() { return <ComingSoon title="보고서" description="인원, 계약, 근태와 청구 현황을 기준별로 분석합니다." icon="chart" />; }
+export const dynamic = "force-dynamic";
+export default function Page() { return <ModulePage {...getReportsView()} />; }

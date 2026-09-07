@@ -8,8 +8,8 @@ import { Icon, type IconName } from "@/components/ui/icon";
 type NavItem = { label: string; href: string; icon: IconName; badge?: string };
 const mainNav: NavItem[] = [
   { label: "홈", href: "/", icon: "home" }, { label: "인력 관리", href: "/workers", icon: "users" },
-  { label: "지점·직무", href: "/sites", icon: "building" }, { label: "배치·계약", href: "/contracts", icon: "document", badge: "3" },
-  { label: "근태·연차", href: "/attendance", icon: "calendar", badge: "8" }, { label: "대체근무", href: "/substitutes", icon: "swap", badge: "2" },
+  { label: "지점·직무", href: "/sites", icon: "building" }, { label: "배치·계약", href: "/contracts", icon: "document" },
+  { label: "근태·연차", href: "/attendance", icon: "calendar" }, { label: "대체근무", href: "/substitutes", icon: "swap" },
   { label: "월 청구", href: "/billing", icon: "receipt" },
 ];
 const secondaryNav: NavItem[] = [

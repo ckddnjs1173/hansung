@@ -2,13 +2,21 @@
   "name": "hansung",
   "version": "0.1.0",
   "private": true,
+  "overrides": {
+    "uuid": "^11.1.1"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "data:import": "node scripts/import-actual-data.mjs",
+    "data:summary": "node scripts/data-summary.mjs",
+    "data:validate": "node scripts/validate-data.mjs",
+    "test:payroll": "node --test scripts/payroll-engine.test.mjs"
   },
   "dependencies": {
+    "exceljs": "^4.4.0",
     "next": "16.3.4",
     "react": "19.2.8",
     "react-dom": "19.2.8"

@@ -1,64 +1,50 @@
-﻿# 한성자동차 관리프로그램
+# 한성자동차 관리프로그램
 
-한성자동차의 작업자, 현장, 계약, 근태, 대체근무, 청구 및 문서 업무를 통합 관리하기 위한 웹 프로그램입니다.
+한성자동차의 작업자, 지점, 계약, 근태, 대체근무, 급여·청구 및 문서 업무를 통합 관리하는 웹 프로그램입니다.
 
-## 개발 목표
+## 현재 구현
 
-- 여러 문서에 반복 입력하던 데이터를 한곳에서 관리
-- 작업자와 현장 배치 현황을 빠르게 확인
-- 근태와 대체근무 내역을 월별 청구에 연계
-- 계약서와 청구 관련 문서 작성 업무 단순화
-- 개인정보와 민감한 운영자료를 안전하게 관리
-- 별도 교육 없이 사용할 수 있는 단순한 관리 화면 제공
-
-## 현재 단계
-
-현재는 1차 화면 프로토타입이 구현된 단계입니다. 모든 화면에는 개인정보가 없는 가상 데이터만 사용합니다.
-
-구현된 화면:
-
-- 홈 업무 대시보드
-- 인력 관리
-- 지점·직무 관리
-- 배치·계약 관리
-- 근태·연차 관리
-- 대체근무 관리
-- 월 청구 관리
-- 문서·교육, 보고서, 설정 준비 화면
-
-데이터 저장, 로그인과 실제 계산 기능은 화면 검토 후 다음 단계에서 연결합니다.
+- 실제 원본 48개 파일의 목록·출처 인덱싱
+- Excel 원시 행을 로컬 SQLite에 보존
+- 재직·퇴사 근로자와 지점·직무·계약기간 통합
+- 대체인력 프로필과 근무 이력 통합
+- 24개 직무별 2026년 급여 규칙 구조화
+- 2026년 9월 개인별 급여·청구 결과 연결
+- 연차대장 원본행 보존과 정규화 검증 화면
+- 실제 로컬 DB 기반 대시보드와 업무 목록
 
 상세 기획은 `docs/PRODUCT_SPEC.md`를 확인하세요.
 
 ## 기술 구성
 
-- Next.js 16
-- React
-- TypeScript
-- Tailwind CSS
-- App Router
+- Next.js 16, React 19, TypeScript, Tailwind CSS
+- Node.js 내장 SQLite
+- ExcelJS 기반 원본 가져오기
 
-데이터베이스, 인증 및 배포 환경은 상세 설계 후 확정합니다.
+## 실제 자료 가져오기 및 실행
 
-## 실행 방법
+```powershell
+npm install
+npm run data:import -- --source="C:\Users\hansuk\Desktop\한성자동차\한성자동차 관리프로그램\doc"
+npm run data:summary
+npm run dev
+```
 
-- 패키지 설치: `npm install`
-- 개발 서버 실행: `npm run dev`
-- 접속 주소: `http://localhost:3000`
+접속 주소는 `http://localhost:3000`입니다. 생성되는 `data/local/hansung.sqlite`에는 개인정보와 급여 자료가 들어 있으므로 Git에서 자동 제외됩니다. 원본도 Git에 올리지 않습니다.
 
-## 개발 검증
+## 검증
 
-- 코드 검사: `npm run lint`
-- 배포 빌드 검사: `npm run build`
-
-## 참고자료 및 개인정보
-
-실제 운영에 사용된 Excel, Word, PDF 등의 원본 파일은 Git 저장소에 올리지 않습니다.
-
-개발에는 개인정보가 없는 가상 데이터만 사용하며, 자세한 원칙은 `reference/README.md`를 확인하세요.
+```powershell
+npm run test:payroll
+npm run lint
+npm run build
+```
 
 ## 주요 문서
 
 - `docs/PRODUCT_SPEC.md`: 전체 제품 기획안
+- `docs/DATA_MODEL.md`: 실제 자료 기반 데이터 구조
+- `docs/CALCULATION_RULES.md`: 급여·청구 계산 구조와 확인 항목
+- `docs/IMPORT_GUIDE.md`: 로컬 원본 가져오기 방법
 - `reference/README.md`: 참고자료와 개인정보 관리 원칙
-- `AGENTS.md`: AI 개발 도구가 따라야 할 프로젝트 규칙
+- `AGENTS.md`: 개발 규칙

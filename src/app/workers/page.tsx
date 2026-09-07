@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { ModulePage } from "@/components/ui/module-page";
-import { moduleConfigs } from "@/mocks/modules";
+import { getWorkersView } from "@/lib/repository";
 export const metadata: Metadata = { title: "인력 관리" };
-export default function Page() { return <ModulePage {...moduleConfigs.workers} />; }
+export const dynamic = "force-dynamic";
+export default function Page() { return <ModulePage {...getWorkersView()} />; }
