@@ -1,0 +1,9 @@
+"use server";
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { changeBillingStatus, createBillingRule, generateBillingRun, updateBillingItem } from "@/lib/billing";
+const t=(f:FormData,k:string)=>String(f.get(k)??"").trim(); const n=(f:FormData,k:string)=>Number(t(f,k)||0);
+export async function saveBillingRule(form:FormData){createBillingRule({name:t(form,"name"),effective_from:t(form,"effective_from"),effective_to:t(form,"effective_to"),pension_rate:n(form,"pension_rate"),health_rate:n(form,"health_rate"),long_term_care_rate:n(form,"long_term_care_rate"),employment_rate:n(form,"employment_rate"),industrial_accident_rate:n(form,"industrial_accident_rate"),wage_claim_rate:n(form,"wage_claim_rate"),asbestos_relief_rate:n(form,"asbestos_relief_rate"),disability_rate:n(form,"disability_rate"),local_business_tax_rate:n(form,"local_business_tax_rate"),welfare_rate:n(form,"welfare_rate"),accident_reserve_rate:n(form,"accident_reserve_rate"),management_fee_rate:n(form,"management_fee_rate"),profit_rate:n(form,"profit_rate"),vat_rate:n(form,"vat_rate"),review_status:t(form,"review_status"),note:t(form,"note")});revalidatePath("/billing");}
+export async function createBillingRun(form:FormData){const id=generateBillingRun(t(form,"billing_month"),n(form,"billing_rule_id"),t(form,"note"));revalidatePath("/billing");redirect(`/billing/${id}`);}
+export async function saveBillingItem(form:FormData){const runId=updateBillingItem(n(form,"id"),n(form,"one_time_cost"),n(form,"manual_adjustment"),t(form,"manual_reason"));revalidatePath(`/billing/${runId}`);revalidatePath("/billing");}
+export async function setBillingStatus(form:FormData){const id=n(form,"id");changeBillingStatus(id,t(form,"status") as "작성중"|"검토"|"승인"|"마감");revalidatePath(`/billing/${id}`);revalidatePath("/billing");revalidatePath("/");}
