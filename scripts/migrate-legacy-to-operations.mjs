@@ -23,7 +23,7 @@ try{
   const appJobs=db.prepare("SELECT id,name FROM app_jobs").all();
   const workerByEmployee=new Map(appWorkers.filter(r=>r.employee_no).map(r=>[String(r.employee_no),Number(r.id)]));
   const workerByName=new Map(appWorkers.map(r=>[String(r.name),Number(r.id)]));
-  const legacyWorkers=new Map(db.prepare("SELECT id,employee_no,name FROM workers").all().map(r=>[Number(r.id),r]));
+  const legacyWorkers=new Map(db.prepare("SELECT id,employee_no,name,joined_at FROM workers").all().map(r=>[Number(r.id),r]));
   const siteByLegacy=new Map(sites.map(r=>[Number(r.id),Number(appSites.find(s=>String(s.name)===String(r.name))?.id??0)]));
   const jobByName=new Map(appJobs.map(r=>[String(r.name),Number(r.id)]));
   let migratedAssignments=0;
