@@ -38,3 +38,25 @@ CREATE TABLE IF NOT EXISTS app_onboarding_runs (
 
 CREATE INDEX IF NOT EXISTS idx_attendance_month_reviews_month ON app_attendance_month_reviews(month, reviewed);
 CREATE INDEX IF NOT EXISTS idx_onboarding_worker ON app_onboarding_runs(worker_id, created_at);
+
+CREATE TRIGGER IF NOT EXISTS trg_attendance_insert_confirmed
+BEFORE INSERT ON app_attendance_events
+WHEN EXISTS (SELECT 1 FROM app_attendance_months WHERE month=substr(NEW.work_date,1,7) AND status='확정')
+BEGIN
+  SELECT RAISE(ABORT, '확정된 근태월은 수정할 수 없습니다.');
+END;
+
+CREATE TRIGGER IF NOT EXISTS trg_attendance_update_confirmed
+BEFORE UPDATE ON app_attendance_events
+WHEN EXISTS (SELECT 1 FROM app_attendance_months WHERE month=substr(OLD.work_date,1,7) AND status='확정')
+   OR EXISTS (SELECT 1 FROM app_attendance_months WHERE month=substr(NEW.work_date,1,7) AND status='확정')
+BEGIN
+  SELECT RAISE(ABORT, '확정된 근태월은 수정할 수 없습니다.');
+END;
+
+CREATE TRIGGER IF NOT EXISTS trg_attendance_delete_confirmed
+BEFORE DELETE ON app_attendance_events
+WHEN EXISTS (SELECT 1 FROM app_attendance_months WHERE month=substr(OLD.work_date,1,7) AND status='확정')
+BEGIN
+  SELECT RAISE(ABORT, '확정된 근태월은 수정할 수 없습니다.');
+END;
