@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { AppShell } from "@/components/layout/app-shell";
+import { currentUser } from "@/lib/auth";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -7,6 +8,7 @@ export const metadata: Metadata = {
   description: "인력, 현장, 근태와 청구 업무를 한곳에서 관리합니다.",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
-  return <html lang="ko"><body><AppShell>{children}</AppShell></body></html>;
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const user=await currentUser();
+  return <html lang="ko"><body><AppShell user={user?{display_name:user.display_name,role:user.role}:null}>{children}</AppShell></body></html>;
 }
