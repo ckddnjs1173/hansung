@@ -19,7 +19,8 @@ export function getWorkerHub(workerId:number){
   if(!current) return null;
   const attendance=all(`SELECT e.*,s.name site_name FROM app_attendance_events e LEFT JOIN app_sites s ON s.id=e.site_id WHERE e.worker_id=? ORDER BY e.work_date DESC,e.id DESC LIMIT 60`,workerId);
   const leaveLedger=all(`SELECT * FROM app_leave_ledger WHERE worker_id=? ORDER BY event_date DESC,id DESC LIMIT 60`,workerId);
-  const leaveBalance=leaveLedger.reduce((sum,row)=>{const days=n(row.leave_days);const type=String(row.event_type??"");return sum+(["발생","조정","취소"].includes(type)?days:-days);},0);
+  const leaveTotal=one(`SELECT COALESCE(SUM(CASE WHEN event_type IN ('발생','조정','취소') THEN leave_days ELSE -leave_days END),0) balance FROM app_leave_ledger WHERE worker_id=?`,workerId);
+  const leaveBalance=n(leaveTotal?.balance);
   const payroll=all(`SELECT i.*,r.payroll_month,r.status run_status FROM app_payroll_items i JOIN app_payroll_runs r ON r.id=i.payroll_run_id WHERE i.worker_id=? ORDER BY r.payroll_month DESC LIMIT 24`,workerId);
   const billing=all(`SELECT i.*,r.billing_month,r.status run_status FROM app_billing_items i JOIN app_billing_runs r ON r.id=i.billing_run_id WHERE i.worker_id=? ORDER BY r.billing_month DESC LIMIT 24`,workerId);
   const documents=all(`SELECT d.id,d.title,d.template_version,d.created_at,t.document_type,t.name template_name,u.display_name generated_by FROM app_generated_documents d JOIN app_document_templates t ON t.id=d.template_id LEFT JOIN app_users u ON u.id=d.generated_by_user_id WHERE d.worker_id=? ORDER BY d.id DESC LIMIT 40`,workerId);
