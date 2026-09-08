@@ -11,6 +11,7 @@
     "start": "next start",
     "lint": "eslint",
     "migration:operational": "node scripts/migrate-legacy-to-operations.mjs",
+    "migration:phase2": "node scripts/migrate-phase2-legacy.mjs",
     "data:import": "node scripts/import-actual-data.mjs",
     "data:summary": "node scripts/data-summary.mjs",
     "data:validate": "node scripts/validate-data.mjs",
