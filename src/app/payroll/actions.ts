@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { auditAs, requireOwner, requireUser } from "@/lib/auth";
-import { changePayrollRunStatus, generatePayrollRun, reopenPayrollRun, updatePayrollItem } from "@/lib/payroll";
+import { changePayrollRunStatus, generatePayrollRun, updatePayrollItem } from "@/lib/payroll";
+import { reopenPayrollRun } from "@/lib/payroll-admin";
 
 const text = (form: FormData, key: string) => String(form.get(key) ?? "").trim();
 const num = (form: FormData, key: string) => Number(text(form,key) || 0);
