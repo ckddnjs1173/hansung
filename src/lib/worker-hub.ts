@@ -25,6 +25,6 @@ export function getWorkerHub(workerId:number){
   const documents=all(`SELECT d.id,d.title,d.template_version,d.created_at,t.document_type,t.name template_name,u.display_name generated_by FROM app_generated_documents d JOIN app_document_templates t ON t.id=d.template_id LEFT JOIN app_users u ON u.id=d.generated_by_user_id WHERE d.worker_id=? ORDER BY d.id DESC LIMIT 40`,workerId);
   const exits=all(`SELECT * FROM app_exit_settlements WHERE worker_id=? ORDER BY exit_date DESC,id DESC LIMIT 10`,workerId);
   const onboarding=all(`SELECT o.*,u.display_name created_by FROM app_onboarding_runs o LEFT JOIN app_users u ON u.id=o.created_by_user_id WHERE o.worker_id=? ORDER BY o.id DESC LIMIT 10`,workerId);
-  const audits=all(`SELECT a.*,u.display_name actor_name FROM app_audit_logs a LEFT JOIN app_users u ON u.id=a.user_id WHERE (a.entity_type='worker' AND a.entity_id=?) OR (a.entity_type='onboarding' AND a.summary LIKE ?) ORDER BY a.id DESC LIMIT 80`,workerId,`%${String(current.name??"")}%`);
+  const audits=all(`SELECT * FROM app_audit_logs WHERE (entity_type='worker' AND entity_id=?) OR (entity_type='onboarding' AND summary LIKE ?) ORDER BY id DESC LIMIT 80`,workerId,`%${String(current.name??"")}%`);
   return {current,attendance,leaveLedger,leaveBalance,payroll,billing,documents,exits,onboarding,audits};
 }
