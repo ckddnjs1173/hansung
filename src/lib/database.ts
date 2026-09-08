@@ -9,6 +9,7 @@ const schemaFiles = [
   path.join(process.cwd(), "database", "phase2.sql"),
   path.join(process.cwd(), "database", "phase3.sql"),
   path.join(process.cwd(), "database", "phase4.sql"),
+  path.join(process.cwd(), "database", "phase5.sql"),
 ];
 
 function ensureDatabaseDirectory() {
