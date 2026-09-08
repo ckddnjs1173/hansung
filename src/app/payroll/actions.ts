@@ -6,6 +6,7 @@ import { auditAs, requireOwner, requireUser } from "@/lib/auth";
 import { withDatabase } from "@/lib/database";
 import { changePayrollRunStatus, generatePayrollRun, updatePayrollItem } from "@/lib/payroll";
 import { reopenPayrollRun } from "@/lib/payroll-admin";
+import { monthStatus } from "@/lib/workflow";
 
 const text = (form: FormData, key: string) => String(form.get(key) ?? "").trim();
 const num = (form: FormData, key: string) => Number(text(form,key) || 0);
@@ -17,8 +18,10 @@ function getRunStatus(id:number){return withDatabase(db=>{const row=db.prepare("
 
 export async function createPayrollRun(form: FormData) {
   const user=await requireUser();
-  const id = generatePayrollRun(text(form,"payroll_month"), num(form,"standard_days"), text(form,"note"));
-  auditAs(user,"create","payroll_run",id,`${text(form,"payroll_month")} 급여회차 생성`);
+  const month=text(form,"payroll_month");
+  if(String(monthStatus(month)?.status??"")!=="확정") throw new Error(`${month} 근태 월마감을 먼저 확정해야 급여회차를 생성할 수 있습니다.`);
+  const id = generatePayrollRun(month, num(form,"standard_days"), text(form,"note"));
+  auditAs(user,"create","payroll_run",id,`${month} 급여회차 생성`);
   revalidatePath("/payroll"); revalidatePath("/"); redirect(`/payroll/${id}`);
 }
 
