@@ -1,6 +1,13 @@
-import type { Metadata } from "next";
-import { ModulePage } from "@/components/ui/module-page";
-import { getDocumentsView } from "@/lib/repository";
-export const metadata: Metadata = { title: "문서·교육" };
-export const dynamic = "force-dynamic";
-export default function Page() { return <ModulePage {...getDocumentsView()} />; }
+import Link from "next/link";
+import { createGeneratedDocument } from "./actions";
+import { documentWorkerOptions, listDocumentTemplates, listGeneratedDocuments } from "@/lib/documents";
+
+export const metadata={title:"문서·교육"};
+export const dynamic="force-dynamic";
+const v=(x:unknown)=>String(x??"");
+
+export default function DocumentsPage(){const templates=listDocumentTemplates(),workers=documentWorkerOptions(),docs=listGeneratedDocuments(100);return <div className="space-y-6">
+<header><p className="text-sm font-semibold text-teal-700">문서 자동화</p><h1 className="mt-1 text-3xl font-black text-slate-950">문서 생성</h1><p className="mt-2 text-sm text-slate-500">인력·배치·계약 정보를 다시 입력하지 않고 프로그램 값으로 문서를 생성합니다.</p></header>
+<section className="grid gap-6 xl:grid-cols-[.8fr_1.2fr]"><div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><h2 className="font-bold">새 문서 생성</h2><form action={createGeneratedDocument} className="mt-4 space-y-3"><label className="block text-xs font-semibold text-slate-500">인력<select name="worker_id" required className="mt-1 h-11 w-full rounded-xl border border-slate-200 px-3 text-sm"><option value="">선택</option>{workers.map(w=><option key={v(w.id)} value={v(w.id)}>{v(w.name)} · {v(w.employee_no)||"사번 없음"} · {v(w.status)}</option>)}</select></label><label className="block text-xs font-semibold text-slate-500">문서 유형<select name="template_id" required className="mt-1 h-11 w-full rounded-xl border border-slate-200 px-3 text-sm"><option value="">선택</option>{templates.map(t=><option key={v(t.id)} value={v(t.id)}>{v(t.name)} · v{v(t.version_no)}</option>)}</select></label><button className="h-11 w-full rounded-xl bg-teal-700 text-sm font-black text-white">문서 생성</button></form><div className="mt-5 rounded-xl bg-slate-50 p-4 text-xs leading-5 text-slate-500">현재 기본 템플릿은 근로계약서·입사안내입니다. 생성 후 인쇄 화면에서 PDF 저장이 가능합니다. 서명 전에는 실제 계약조건과 문구를 반드시 최종 확인하세요.</div></div>
+<div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><div className="flex items-center justify-between"><h2 className="font-bold">생성 이력</h2><span className="text-xs text-slate-400">최근 {docs.length}건</span></div><div className="mt-4 space-y-2">{docs.map(d=><Link href={`/documents/${v(d.id)}`} key={v(d.id)} className="flex items-center justify-between rounded-xl border border-slate-200 p-4 hover:border-teal-300"><div><p className="font-bold text-slate-900">{v(d.title)}</p><p className="mt-1 text-xs text-slate-500">{v(d.worker_name)} · {v(d.template_name)} · 생성자 {v(d.generated_by)||"-"}</p></div><div className="text-right"><p className="text-xs text-slate-400">{v(d.created_at)}</p><p className="mt-1 text-xs font-bold text-teal-700">열기 / 인쇄</p></div></Link>)}{!docs.length?<div className="rounded-xl border border-dashed border-slate-300 p-10 text-center text-sm text-slate-400">아직 생성된 문서가 없습니다.</div>:null}</div></div></section>
+</div>}
