@@ -14,7 +14,8 @@ const mainNav: NavItem[] = [
   { label: "배치·계약", href: "/contracts", icon: "document" },
   { label: "근태·연차", href: "/attendance", icon: "calendar" },
   { label: "대체근무", href: "/substitutes", icon: "swap" },
-  { label: "급여·청구", href: "/billing", icon: "receipt" },
+  { label: "급여", href: "/payroll", icon: "receipt" },
+  { label: "고객사 청구", href: "/billing", icon: "chart" },
 ];
 const secondaryNav: NavItem[] = [
   { label: "문서·교육", href: "/documents", icon: "folder" },
