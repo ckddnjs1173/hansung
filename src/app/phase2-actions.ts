@@ -8,16 +8,20 @@ import { auditAs, requireUser } from "@/lib/auth";
 const text=(form:FormData,key:string)=>String(form.get(key)??"").trim();
 const num=(form:FormData,key:string)=>Number(text(form,key)||0);
 const nullable=(value:string)=>value||null;
+const monthOf=(date:string)=>date.slice(0,7);
+function assertAttendanceMonthEditable(workDate:string){const month=monthOf(workDate);withDatabase(db=>{const run=db.prepare("SELECT status FROM app_payroll_runs WHERE payroll_month=?").get(month) as {status?:string}|undefined;if(run&&["승인","마감"].includes(String(run.status)))throw new Error(`${month} 급여가 ${run.status} 상태라 근태를 수정할 수 없습니다. 관리자가 급여를 검토 상태로 되돌린 뒤 수정하세요.`);});}
+function attendanceDateById(id:number){return withDatabase(db=>{const row=db.prepare("SELECT work_date FROM app_attendance_events WHERE id=?").get(id) as {work_date?:string}|undefined;if(!row?.work_date)throw new Error("근태 기록을 찾을 수 없습니다.");return row.work_date;});}
 
 export async function createAttendanceEvent(form:FormData){
   const user=await requireUser();const workerId=num(form,"worker_id"),workDate=text(form,"work_date"),eventType=text(form,"event_type");
   if(!workerId||!workDate||!eventType) throw new Error("근로자, 날짜, 근태 유형은 필수입니다.");
+  assertAttendanceMonthEditable(workDate);
   const id=withDatabase(db=>{const assignment=db.prepare("SELECT id,site_id FROM app_assignments WHERE worker_id=? AND status='활성' ORDER BY started_at DESC LIMIT 1").get(workerId) as {id?:number;site_id?:number}|undefined; const r=db.prepare(`INSERT INTO app_attendance_events(worker_id,assignment_id,site_id,work_date,event_type,minutes,days,started_at,ended_at,note) VALUES(?,?,?,?,?,?,?,?,?,?)`).run(workerId,assignment?.id??null,assignment?.site_id??null,workDate,eventType,num(form,"minutes"),num(form,"days"),nullable(text(form,"started_at")),nullable(text(form,"ended_at")),nullable(text(form,"note")));return Number(r.lastInsertRowid);});
   auditAs(user,"create","attendance",id,`${workDate} ${eventType} 등록`);revalidatePath("/attendance"); revalidatePath("/");
 }
 
 export async function deleteAttendanceEvent(form:FormData){
-  const user=await requireUser();const id=num(form,"id"); if(!id)return;
+  const user=await requireUser();const id=num(form,"id"); if(!id)return;const workDate=attendanceDateById(id);assertAttendanceMonthEditable(workDate);
   withDatabase(db=>db.prepare("DELETE FROM app_attendance_events WHERE id=?").run(id));auditAs(user,"delete","attendance",id,"근태 예외 삭제");revalidatePath("/attendance");
 }
 
@@ -41,14 +45,14 @@ export async function createSubstituteRequest(form:FormData){
 }
 
 export async function assignSubstitute(form:FormData){
-  const user=await requireUser();const requestId=num(form,"request_id"),substituteId=num(form,"substitute_id");if(!requestId||!substituteId)throw new Error("대체근무자 선택이 필요합니다.");withDatabase(db=>db.prepare("UPDATE app_substitute_requests SET assigned_substitute_id=?,status='배정',updated_at=CURRENT_TIMESTAMP WHERE id=?").run(substituteId,requestId));auditAs(user,"assign","substitute_request",requestId,"대체근무자 배정");revalidatePath("/substitutes");revalidatePath(`/substitutes/${requestId}`);revalidatePath("/");
+  const user=await requireUser();const requestId=num(form,"request_id"),substituteId=num(form,"substitute_id");if(!requestId||!substituteId)throw new Error("대체근무자 선택이 필요합니다.");withDatabase(db=>{const req=db.prepare("SELECT status FROM app_substitute_requests WHERE id=?").get(requestId) as {status?:string}|undefined;if(!req)throw new Error("대체근무 요청을 찾을 수 없습니다.");if(["완료","취소"].includes(String(req.status)))throw new Error("완료 또는 취소된 요청은 다시 배정할 수 없습니다.");db.prepare("UPDATE app_substitute_requests SET assigned_substitute_id=?,status='배정',updated_at=CURRENT_TIMESTAMP WHERE id=?").run(substituteId,requestId);});auditAs(user,"assign","substitute_request",requestId,"대체근무자 배정");revalidatePath("/substitutes");revalidatePath(`/substitutes/${requestId}`);revalidatePath("/");
 }
 
 export async function completeSubstituteRequest(form:FormData){
   const user=await requireUser();const requestId=num(form,"request_id");if(!requestId)return;
-  withDatabase(db=>{const r=db.prepare("SELECT * FROM app_substitute_requests WHERE id=?").get(requestId) as Record<string,unknown>|undefined;if(!r?.assigned_substitute_id)throw new Error("배정된 대체근무자가 없습니다.");db.prepare("UPDATE app_substitute_requests SET status='완료',updated_at=CURRENT_TIMESTAMP WHERE id=?").run(requestId);db.prepare(`INSERT OR IGNORE INTO app_substitute_work_history(substitute_id,request_id,site_id,job_id,work_date,hours,note) VALUES(?,?,?,?,?,?,?)`).run(r.assigned_substitute_id,requestId,r.site_id,r.job_id,r.work_date,r.hours,r.note);});auditAs(user,"complete","substitute_request",requestId,"대체근무 완료");revalidatePath("/substitutes");revalidatePath(`/substitutes/${requestId}`);revalidatePath("/");
+  withDatabase(db=>{const r=db.prepare("SELECT * FROM app_substitute_requests WHERE id=?").get(requestId) as Record<string,unknown>|undefined;if(!r?.assigned_substitute_id)throw new Error("배정된 대체근무자가 없습니다.");if(r.status==="완료")return;if(r.status==="취소")throw new Error("취소된 요청은 완료 처리할 수 없습니다.");db.prepare("UPDATE app_substitute_requests SET status='완료',updated_at=CURRENT_TIMESTAMP WHERE id=?").run(requestId);db.prepare(`INSERT OR IGNORE INTO app_substitute_work_history(substitute_id,request_id,site_id,job_id,work_date,hours,note) VALUES(?,?,?,?,?,?,?)`).run(r.assigned_substitute_id,requestId,r.site_id,r.job_id,r.work_date,r.hours,r.note);});auditAs(user,"complete","substitute_request",requestId,"대체근무 완료");revalidatePath("/substitutes");revalidatePath(`/substitutes/${requestId}`);revalidatePath("/");
 }
 
 export async function cancelSubstituteRequest(form:FormData){
-  const user=await requireUser();const requestId=num(form,"request_id");if(!requestId)return;withDatabase(db=>db.prepare("UPDATE app_substitute_requests SET status='취소',updated_at=CURRENT_TIMESTAMP WHERE id=?").run(requestId));auditAs(user,"cancel","substitute_request",requestId,"대체근무 요청 취소");revalidatePath("/substitutes");revalidatePath(`/substitutes/${requestId}`);revalidatePath("/");
+  const user=await requireUser();const requestId=num(form,"request_id");if(!requestId)return;withDatabase(db=>{const req=db.prepare("SELECT status FROM app_substitute_requests WHERE id=?").get(requestId) as {status?:string}|undefined;if(!req)throw new Error("대체근무 요청을 찾을 수 없습니다.");if(req.status==="완료")throw new Error("완료된 요청은 취소할 수 없습니다.");db.prepare("UPDATE app_substitute_requests SET status='취소',updated_at=CURRENT_TIMESTAMP WHERE id=?").run(requestId);});auditAs(user,"cancel","substitute_request",requestId,"대체근무 요청 취소");revalidatePath("/substitutes");revalidatePath(`/substitutes/${requestId}`);revalidatePath("/");
 }
