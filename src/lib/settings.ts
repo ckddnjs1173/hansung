@@ -1,0 +1,6 @@
+import "server-only";
+import { withDatabase } from "@/lib/database";
+
+export function listUsers(){return withDatabase(db=>db.prepare("SELECT id,login_id,display_name,role,is_active,created_at,updated_at FROM app_users ORDER BY role,id").all() as Record<string,unknown>[]);}
+export function listAuditLogs(limit=100){return withDatabase(db=>db.prepare("SELECT id,actor_role,action,entity_type,entity_id,summary,created_at FROM app_audit_logs ORDER BY id DESC LIMIT ?").all(limit) as Record<string,unknown>[]);}
+export function updateUserAccess(id:number,role:"owner"|"operator",isActive:number){return withDatabase(db=>{const current=db.prepare("SELECT role,is_active FROM app_users WHERE id=?").get(id) as {role:string;is_active:number}|undefined;if(!current) throw new Error("사용자를 찾을 수 없습니다.");if(current.role==="owner"&&(role!=="owner"||!isActive)){const owners=db.prepare("SELECT COUNT(*) count FROM app_users WHERE role='owner' AND is_active=1").get() as {count:number};if(Number(owners.count)<=1) throw new Error("활성 관리자 계정은 최소 1개 필요합니다.");}db.prepare("UPDATE app_users SET role=?,is_active=?,updated_at=CURRENT_TIMESTAMP WHERE id=?").run(role,isActive,id);});}
